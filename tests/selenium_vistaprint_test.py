@@ -8,10 +8,10 @@ class VistaPrintTests(unittest.TestCase):
 
     def setUp(self):
         # Check if sauce credentials are available during runtime
-        credentials_index = [i for i, arguments in enumerate(sys.argv) if '-cred' in arguments]
-        if len(credentials_index) > 0:
-            sauce_username = sys.argv[credentials_index[0]].split('=')[1].split(':')[0]
-            sauce_access_key = sys.argv[credentials_index[0]].split('=')[1].split(':')[1]
+        self.credentials_index = [i for i, arguments in enumerate(sys.argv) if '-cred' in arguments]
+        if len(self.credentials_index) > 0:
+            sauce_username = sys.argv[self.credentials_index[0]].split('=')[1].split(':')[0]
+            sauce_access_key = sys.argv[self.credentials_index[0]].split('=')[1].split(':')[1]
             sauce_url = "http://%s:%s@ondemand.saucelabs.com:80/wd/hub"
             self.driver = webdriver.Remote(
                     desired_capabilities={'platform': 'Windows 8', 'browserName': 'chrome', 'name': 'vistaprint_login'},
@@ -19,7 +19,6 @@ class VistaPrintTests(unittest.TestCase):
             )
             self.driver.implicitly_wait(30)
             self.sauce = SauceClient(sauce_username, sauce_access_key)
-
         else: # default to firefox
             self.driver = webdriver.Firefox()
 
@@ -38,10 +37,13 @@ class VistaPrintTests(unittest.TestCase):
 
     def tearDown(self):
         try:
-            if sys.exc_info() == (None, None, None):
-                self.sauce.jobs.update_job(self.driver.session_id, passed=True)
+            if len(self.credentials_index) > 0:
+                if sys.exc_info() == (None, None, None):
+                    self.sauce.jobs.update_job(self.driver.session_id, passed=True)
+                else:
+                    self.sauce.jobs.update_job(self.driver.session_id, passed=False)
             else:
-                self.sauce.jobs.update_job(self.driver.session_id, passed=False)
+                pass # do nothing
         finally:
             self.driver.quit()
 
